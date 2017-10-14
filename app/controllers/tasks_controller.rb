@@ -1,6 +1,19 @@
 class TasksController < ApplicationController
   before_action :require_user_logged_in
-  before_action :corrent_user, only:[:destroy]
+  before_action :corrent_user, only: [:show, :edit, :update, :destroy]
+  
+  def index
+    if logged_in?
+      @tasks = current_user.tasks.order('created_at DESC').page(params[:page])
+    end
+  end
+  
+  def show
+  end
+  
+  def new
+    @task = current_user.tasks.build
+  end
   
   def create
     @task = current_user.tasks.build(task_params)
@@ -9,20 +22,34 @@ class TasksController < ApplicationController
       redirect_to root_url
     else
       @tasks = current_user.tasks.order('created_at DESC').page(params[:page])
-      flash[:danger] = "メッセージの投稿に失敗しました。"
-      render 'toppage/index'
+      flash.now[:danger] = "メッセージの投稿に失敗しました。"
+      render 'toppages/index'
     end
   end  
+
+  def edit
+  end
+  
+  def update
+    if @task.update(task_params)
+       flash[:success] = 'タスク は正常に更新されました'
+      redirect_to @task
+    else
+      flash.now[:danger] = 'タスク は更新されませんでした'
+      render :edit
+    end
+  end    
+
   def destroy
     @task.destroy
     flash[:success] = 'メッセージを削除しました。'
-    redirect_back(fallback_location: root_path)
+    redirect_to root_url
   end
   
   private
   
   def task_params
-    params.require(:task).permit(:content)
+    params.require(:task).permit(:content, :status)
   end
   
   def corrent_user
@@ -31,4 +58,5 @@ class TasksController < ApplicationController
       redirect_to root_url
     end
   end
-end
+end  
+
